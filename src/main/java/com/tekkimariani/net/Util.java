@@ -15,9 +15,9 @@ public class Util {
     private static final int timeout = 3000; // Timeout in Millisekunden
     
     public static void login() {
-        String username = "Administrator";
-        String password = "***";
-        String targetPC = "192.168.203.10"; // Die IP des aufgewachten PCs
+        String username = "User";
+        String password = "password";
+        String targetPC = "172.25.164.93"; // Die IP des aufgewachten PCs
         String command = "cmd.exe"; // Oder "powershell.exe"
 
         String[] cmd = {
