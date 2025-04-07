@@ -13,11 +13,13 @@
 	</repositories>
   
   <dependencies>
+  
   		<dependency>
 		    <groupId>org.tinylog</groupId>
 		    <artifactId>tinylog-api</artifactId>
 		    <version>2.6.2</version>
 		</dependency>
+		
 		<dependency>
 		    <groupId>org.tinylog</groupId>
 		    <artifactId>tinylog-impl</artifactId>
@@ -29,6 +31,13 @@
 			<artifactId>jsch</artifactId>
 			<version>0.2.24</version>
 		</dependency>
+		
+		<dependency>
+		    <groupId>com.fasterxml.jackson.core</groupId>
+		    <artifactId>jackson-databind</artifactId>
+		    <version>2.16.0</version>
+		</dependency>
+		
   </dependencies>
 </project>
 

@@ -1,4 +1,4 @@
-package com.tekkimariani.net;
+package com.tekkimariani.cleanup.net;
 
 import com.jcraft.jsch.*;
 
