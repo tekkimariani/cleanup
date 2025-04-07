@@ -4,6 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.net.NetworkInterface;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,6 +27,10 @@ import org.tinylog.Logger;
 import com.tekkimariani.cleanup.net.Host;
 
 public class Gui {
+
+    private static final String GUI_INFO = "info";
+    private static final String GUI_SELECTION = "selection";
+    private static final String GUI_SCANNER = "scanner";
 	
     // Farben für den Dark Mode
     Color bgColor = new Color(45, 45, 45); // Dunkelgrau
@@ -43,8 +49,10 @@ public class Gui {
 	private String labelLocalIpPre = "IP: ";
 	private JLabel labelLocalIp;
 	
-	private String labelMarkedPcPre = "Marked: ";
-	private JLabel labelMarkedPc;
+	private String labelLocalBroadcastPre = "Broadcast: ";
+	private JLabel labelLocalBroadcast;
+	
+    private JLabel info;
 	
 	DefaultListModel<String> listModel;
 	
@@ -57,12 +65,12 @@ public class Gui {
 		createAndShowGUI();
 	}
 	
-	public void setLocalSubnet(String localSubnet) {
-		this.labelLocalSubnet.setText(labelLocalSubnetPre+localSubnet);
-	}
+
 	
-	public void setLocalIp(String localIp) {
-		this.labelLocalIp.setText(labelLocalIpPre+localIp);
+	public void setLocal(String ip, String subnetMask, String broadcast) {
+		this.labelLocalIp.setText(labelLocalIpPre+ip);
+		this.labelLocalSubnet.setText(labelLocalSubnetPre+subnetMask);
+		this.labelLocalBroadcast.setText(labelLocalBroadcastPre+broadcast);
 	}
 	
 	public void setHosts(Map<String, Host> hosts) {
@@ -73,10 +81,14 @@ public class Gui {
 		}
 	}
 	
+	public void setInfoPanel() {
+	
+	}
+	
     private void createAndShowGUI() {
 
         // Fenster erstellen
-        frame = new JFrame("Netzwerksteuerung (Dark Mode)");
+        frame = new JFrame("Netzwerksteuerung");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(800, 400);
         frame.setLayout(new BorderLayout());
@@ -85,14 +97,54 @@ public class Gui {
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
         
-        mainPanel.add(createInterfaceSelectorPanel(), "interfaceSelector");
-        mainPanel.add(createScannerPanel(), "scannerUI");
+        mainPanel.add(createInterfaceSelectorPanel(), GUI_SELECTION);
+        mainPanel.add(createScannerPanel(), GUI_SCANNER);
+        mainPanel.add(createInfoJPanel(), GUI_INFO);
 
 
 
         // Fenster sichtbar machen
         frame.setContentPane(mainPanel);
         frame.setVisible(true);
+    }
+
+    private void show(String name) {
+        cardLayout.show(mainPanel, name);
+    }
+
+    public void showScanner() {
+        this.show(GUI_SCANNER);
+    }
+
+    public void showSelection() {
+        this.show(GUI_SELECTION);
+    }
+
+    public void showInfo(String infoText) {
+        info.setText(infoText);
+        this.show(GUI_INFO);
+    }
+
+
+    private JPanel createInfoJPanel() {
+        // Create the informational JPanel
+        JPanel panel = new JPanel();
+        info = new JLabel("This is an informational message for the user.");
+
+        // Create a JButton
+        JButton closeButton = new JButton("Close");
+
+        // Add an ActionListener to the button
+        closeButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                System.exit(0); // Exit the program
+            }
+        });
+
+
+        panel.add(info);
+        panel.add(closeButton);
+        return panel;
     }
     
     
@@ -119,8 +171,8 @@ public class Gui {
                 System.out.println("Selected: " + selected);
 
                 // Switch to scanner UI
-//                app.setNetworkInterface(ni);
-                cardLayout.show(mainPanel, "scannerUI");
+                app.setNetworkInterface(ni);
+                this.show("scannerUI");
             }
         });
 
@@ -142,13 +194,7 @@ public class Gui {
         mainPanel.setBackground(bgColor);
         mainPanel.setBorder(BorderFactory.createEmptyBorder()); // Keine Ränder
 
-//        // *** Linke Seite: Scrollbare Liste für Netzwerk-Computer ***
-//        JList<String> computerList = createStyledList(panelColor, fgColor);
-//        JScrollPane scrollPane = new JScrollPane(computerList);
-//        styleScrollPane(scrollPane, panelColor);
-//        mainPanel.add(scrollPane);
-     // *** Linke Seite: Scrollbare Liste für Netzwerk-Computer **
-        
+
         computerList = createStyledList(panelColor, fgColor);
 
         JScrollPane scrollPane = new JScrollPane(computerList);
@@ -171,8 +217,7 @@ public class Gui {
         JScrollPane infoScrollPane = new JScrollPane(infoArea, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         styleScrollPane(infoScrollPane, panelColor);
         mainPanel.add(infoScrollPane);
-        infoArea.setText("wtf wtf wtf wtf wtf wtf wtf wtf \nwtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf wtf ");
-
+        infoArea.setText("");
         panel.add(mainPanel, BorderLayout.CENTER);
 
         // *** Statusleiste unten ***
@@ -248,10 +293,10 @@ public class Gui {
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Einheitlicher Abstand
 
         labelLocalIp = createStyledLabel("", Color.WHITE);
-        this.setLocalIp("");
-        labelLocalSubnet = createStyledLabel("", Color.WHITE);
-        this.setLocalSubnet("");
         
+        labelLocalSubnet = createStyledLabel("", Color.WHITE);
+        labelLocalBroadcast = createStyledLabel("", Color.WHITE);
+        this.setLocal("", "", "");
         JButton btn1 = createStyledButton("Scan", btnColor, fgColor);
         btn1.addActionListener(e -> {
         	Logger.debug("Scanne das Netzwerk nach Computern.");
@@ -278,6 +323,7 @@ public class Gui {
 
         buttonPanel.add(labelLocalIp);
         buttonPanel.add(labelLocalSubnet);
+        buttonPanel.add(labelLocalBroadcast);
         buttonPanel.add(btn1);
         buttonPanel.add(btn2);
         buttonPanel.add(btn3);
