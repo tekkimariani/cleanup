@@ -7,7 +7,9 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.NetworkInterface;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.swing.BorderFactory;
@@ -25,6 +27,7 @@ import javax.swing.JTextArea;
 import org.tinylog.Logger;
 
 import com.tekkimariani.cleanup.net.Host;
+import com.tekkimariani.cleanup.net.Util;
 
 public class Gui {
 
@@ -60,6 +63,9 @@ public class Gui {
 	
 	private static JList<String> computerList;
 	
+	private List<String> subnetSelection = List.of("255.255.255.255");
+	JComboBox<String> maskComboBox;
+	
 	public Gui(App app) {
 		Gui.app = app;
 		createAndShowGUI();
@@ -71,6 +77,12 @@ public class Gui {
 		this.labelLocalIp.setText(labelLocalIpPre+ip);
 		this.labelLocalSubnet.setText(labelLocalSubnetPre+subnetMask);
 		this.labelLocalBroadcast.setText(labelLocalBroadcastPre+broadcast);
+		this.subnetSelection = Util.getRelevantSubnetMasks(subnetMask);
+		this.maskComboBox.removeAllItems();
+		
+		for (String mask : this.subnetSelection) {
+			this.maskComboBox.addItem(mask);
+		}
 	}
 	
 	public void setHosts(Map<String, Host> hosts) {
@@ -263,23 +275,28 @@ public class Gui {
 
     // Methode zum Erstellen einer Liste
     private JList<String> createStyledList(Color bgColor, Color fgColor) {
+    	
         DefaultListModel<String> listModel = new DefaultListModel<>();
         JList<String> list = new JList<>(listModel);
         list.setBackground(bgColor);
         list.setForeground(fgColor);
         list.setBorder(BorderFactory.createEmptyBorder()); // Keine Ränder
         list.addListSelectionListener(e -> {
+        	List<String> selection = new ArrayList<>();
             if (!e.getValueIsAdjusting()) {  // Verhindert mehrfaches Auslösen während der Auswahländerung
                 int[] selectedIndices = list.getSelectedIndices();
 //                System.out.println("Ausgewählte Indizes: " + Arrays.toString(selectedIndices));
                 
                 if (selectedIndices.length > 0) {
-                    System.out.println("Ausgewählte Items: ");
+//                    System.out.println("Ausgewählte Items: ");
                     for (int index : selectedIndices) {
 //                        System.out.println(list.getModel().getElementAt(index));
-                        app.setMarkedHost(list.getSelectedValue());
+//                        app.setSelectedHost(list.getSelectedValue());
+                        selection.add(list.getModel().getElementAt(index));
+                        
                     }
                 }
+                app.setSelectedHosts(selection);
             }
         });
         return list; 
@@ -295,8 +312,24 @@ public class Gui {
         labelLocalIp = createStyledLabel("", Color.WHITE);
         
         labelLocalSubnet = createStyledLabel("", Color.WHITE);
+        
+        maskComboBox = new JComboBox<>(subnetSelection.toArray(new String[0]));
+        maskComboBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+            	if (maskComboBox.getSelectedItem() == null || maskComboBox.getSelectedItem().equals("")) return;
+                String selectedMask = (String) maskComboBox.getSelectedItem();
+//                System.out.println("Selected: " + selectedMask);
+                // Do something with the selection...
+                app.setSelectedSubmask(selectedMask);
+            }
+        });
+        
         labelLocalBroadcast = createStyledLabel("", Color.WHITE);
         this.setLocal("", "", "");
+        
+     // TODO: Move the buttons to the selected section
+        
         JButton btn1 = createStyledButton("Scan", btnColor, fgColor);
         btn1.addActionListener(e -> {
         	Logger.debug("Scanne das Netzwerk nach Computern.");
@@ -311,18 +344,22 @@ public class Gui {
         
         JButton btn3 = createStyledButton("Restart", btnColor, fgColor);
         btn3.addActionListener(e -> {
-        	Logger.debug("Scanne das Netzwerk nach Computern.");
-//        	app.restart();
+        	Logger.debug("restart :o");
+        	app.actionRestart();
+        	// TODO: Implement the restart action
         });
         
         JButton btn4 = createStyledButton(App.ACTION_SHUTDOWN, btnColor, fgColor);
         btn4.addActionListener(e -> {
-//            Logger.debug("Sh");
             app.actionShutdown();
         });
+        
+        // TODO: Do a delete button to delete host from the list.
 
+        
         buttonPanel.add(labelLocalIp);
         buttonPanel.add(labelLocalSubnet);
+        buttonPanel.add(maskComboBox);
         buttonPanel.add(labelLocalBroadcast);
         buttonPanel.add(btn1);
         buttonPanel.add(btn2);

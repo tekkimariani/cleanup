@@ -43,7 +43,7 @@ public class Host {
 
 	@Override
     public String toString() {
-        return "Host: '" + ip + "' | Mac: '"+mac+"' | Reachable: '" + reachable+ "'";
+        return "Host: '" + ip + "' | Mac: '"+mac+"' | Reachable: '" + reachable + "'";
     }
 	
     @Override

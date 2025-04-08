@@ -9,8 +9,11 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.tinylog.Logger;
@@ -73,7 +76,7 @@ public class Util {
     
     public static void shutdown(String ip) {
       String username = "Administrator";
-      String password = "Windows11"; // Change to the actual password
+      String password = "Windows11";
         try {
             JSch jsch = new JSch();
             Session session = jsch.getSession(username, ip, 22);
@@ -85,7 +88,7 @@ public class Util {
             ChannelExec channel = (ChannelExec) session.openChannel("exec");
             channel.setInputStream(null);
             channel.setErrStream(System.err);           
-            channel.setCommand("shutdown -s -t 10 -f");
+            channel.setCommand("shutdown /s /t 10 /f");
 
             channel.connect();
             Thread.sleep(2000); // Warte auf Befehlsausführung
@@ -98,6 +101,34 @@ public class Util {
             e.printStackTrace();
         }
     }
+    
+    public static void restart(String ip) {
+        String username = "Administrator";
+        String password = "Windows11";
+          try {
+              JSch jsch = new JSch();
+              Session session = jsch.getSession(username, ip, 22);
+              session.setPassword(password);
+              session.setConfig("StrictHostKeyChecking", "no");
+              session.connect();
+
+              // Shutdown-Befehl ausführen
+              ChannelExec channel = (ChannelExec) session.openChannel("exec");
+              channel.setInputStream(null);
+              channel.setErrStream(System.err);           
+              channel.setCommand("shutdown /r /f /t 0");
+
+              channel.connect();
+              Thread.sleep(2000); // Warte auf Befehlsausführung
+              channel.disconnect();
+              session.disconnect();
+
+              System.out.println("Reboot-Befehl gesendet an " + ip);
+
+          } catch (Exception e) {
+              e.printStackTrace();
+          }
+      }
 
 	
     public static void sendWakeOnLan(String macAddress, String broadcastAddress) throws Exception {
@@ -118,9 +149,18 @@ public class Util {
         DatagramPacket packet = new DatagramPacket(magicPacket, magicPacket.length, address, PORT);
         DatagramSocket socket = new DatagramSocket();
         socket.send(packet);
+        Logger.debug("Wake-on-LAN Packet gesendet an " + macAddress);
+        try {
+            Thread.sleep(1000); // 1000 milliseconds = 1 second
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt(); // Restore interrupted status
+            System.err.println("Sleep interrupted!");
+        }
+        socket.send(packet);
+        Logger.debug("Wake-on-LAN Packet gesendet an " + macAddress);
         socket.close();
 
-        Logger.debug("Wake-on-LAN Packet gesendet an " + macAddress);
+        
     }
 
     private static byte[] getMacBytes(String macAddress) throws IllegalArgumentException {
@@ -208,20 +248,7 @@ public class Util {
 	    return null;
 	}
 	
-//	@SuppressWarnings("deprecation")
-//	public static boolean isWindowsHost(String ip) {
-//	    try {
-//	        Process p = Runtime.getRuntime().exec("nbtstat -A " + ip);
-//	        java.util.Scanner s = new java.util.Scanner(p.getInputStream()).useDelimiter("\\A");
-//	        String output = s.hasNext() ? s.next() : "";
-//	        s.close();
-//	        return output.contains("Windows") || output.contains("MAC Address");
-//	        
-//	    } catch (IOException e) {
-//	        e.printStackTrace();
-//	    }
-//	    return false;
-//	}
+
 	
     public static String getLocalSubnet() {
         try {
@@ -302,6 +329,62 @@ public class Util {
             e.printStackTrace();
         }
         return result;
+    }
+    
+    public static String getDisplayName(String ip) {
+    	try {
+			InetAddress inet = InetAddress.getByName(ip);
+			return inet.getHostName();
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	return "";
+    }
+ 
+    
+    /**
+     * Gibt eine Liste von Subnetzmasken zurück, die für die gegebene Maske sinnvoll sind.
+     * Beispiel:
+     * - Input: "255.255.0.0" → Output: ["255.255.0.0", "255.255.255.0"]
+     * - Input: "255.255.255.0" → Output: ["255.255.255.0"]
+     */
+    public static List<String> getRelevantSubnetMasks(String currentSubnetMask) {
+        List<String> masks = new ArrayList<>();
+
+        // Standard-Subnetzmasken (von grob zu fein)
+        String[] commonMasks = {
+            "255.0.0.0",       // /8
+            "255.255.0.0",      // /16
+            "255.255.255.0",     // /24
+            "255.255.255.128",   // /25
+            "255.255.255.192",  // /26
+            "255.255.255.224",   // /27
+            "255.255.255.240",  // /28
+            "255.255.255.248",   // /29
+            "255.255.255.252"    // /30
+        };
+
+        // Finde die aktuelle Maske in der Liste
+        int currentIndex = -1;
+        for (int i = 0; i < commonMasks.length; i++) {
+            if (commonMasks[i].equals(currentSubnetMask)) {
+                currentIndex = i;
+                break;
+            }
+        }
+
+        // Füge die aktuelle Maske + alle spezifischeren Masken hinzu
+        if (currentIndex != -1) {
+            for (int i = currentIndex; i < commonMasks.length; i++) {
+                masks.add(commonMasks[i]);
+            }
+        } else {
+            // Falls unbekannte Maske: Nur die aktuelle zurückgeben
+            masks.add(currentSubnetMask);
+        }
+
+        return masks;
     }
     
     

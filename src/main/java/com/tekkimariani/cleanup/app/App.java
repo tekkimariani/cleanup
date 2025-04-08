@@ -4,6 +4,7 @@ import java.net.InetAddress;
 import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -14,6 +15,7 @@ import javax.swing.JList;
 import org.tinylog.Logger;
 
 import com.tekkimariani.cleanup.net.FastNetworkScanner;
+import com.tekkimariani.cleanup.net.BetterNetworkScanner;
 import com.tekkimariani.cleanup.net.Host;
 import com.tekkimariani.cleanup.net.Util;
 
@@ -30,10 +32,12 @@ public class App {
 	private String localIp;
 	private String localSubnetMask;
 	private String localBroadcast;
+	private String selectedSubnetMask;
 	
 	Map<String, Host> savedHosts = new HashMap<String, Host>();
 	List<Host> foundHosts;
 	private Host selectedHost;
+	List<Host> selectedHosts = new ArrayList<>();
 
 	Map<String, NetworkInterface> networkInterfaces;
 	NetworkInterface networkInterface;
@@ -129,7 +133,7 @@ public class App {
 		ui.showScanner();
 	}
 	
-	public void setMarkedHost(String ip) {
+	public void setSelectedHost(String ip) {
 		for (Map.Entry<String,Host> host : savedHosts.entrySet()) {
 			Logger.debug(host);
 		}
@@ -139,30 +143,81 @@ public class App {
 		Logger.debug("Marked IP: "+this.selectedHost);
 	}
 	
+	public void setSelectedHosts(List<String> hosts) {
+		this.selectedHosts.clear();
+		for (String ip : hosts) {
+			this.selectedHosts.add(savedHosts.get(ip));
+		}
+		if (this.selectedHosts.size() == 0) {
+			// TODO: Show an info about the need to select a host.
+		}
+		
+		if (this.selectedHosts.size() == 1) {
+			// TODO: Show information about this host
+			
+		}
+		if (this.selectedHosts.size() > 1) {
+			// TODO: Show the selected group ??
+		}
+	}
+	
+	public void setSelectedSubmask(String submask) {
+		this.selectedSubnetMask = submask;
+	}
+	
 	public void actionWol() {
-		if (selectedHost == null) {
-			Logger.debug("fail");
+		if (selectedHosts == null) {
+			Logger.error("selectedHosts is null");
+			return;
+		}
+		if (selectedHosts.size() == 0) {
+			Logger.debug("No host was selected");
 			return;
 		}
 		try {
-			Logger.debug("WOL to " + this.selectedHost);
-			Util.sendWakeOnLan(this.selectedHost.getMac(), "192.168.255.255");
+			for (Host host : selectedHosts) {
+				Logger.debug("WOL to " + host.getIp());
+				Util.sendWakeOnLan(host.getMac(), localBroadcast);
+			}
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 	
 	public void actionShutdown() {
-		if (selectedHost == null) {
-			Logger.debug("fail");
+		if (selectedHosts == null) {
+			Logger.error("selectedHosts is null");
+			return;
+		}
+		if (selectedHosts.size() == 0) {
+			Logger.debug("No host was selected");
 			return;
 		}
 		try {
-			Logger.debug("Shutdown " + this.selectedHost);
-			Util.shutdown(this.selectedHost.getIp());
+			for (Host host : selectedHosts) {
+				Logger.debug("Shutdown " + host);
+				Util.shutdown(host.getIp());
+			}
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public void actionRestart() {
+		if (selectedHosts == null) {
+			Logger.error("selectedHosts is null");
+			return;
+		}
+		if (selectedHosts.size() == 0) {
+			Logger.debug("No host was selected");
+			return;
+		}
+		try {
+			for (Host host : selectedHosts) {
+				Logger.debug("Shutdown " + host);
+				Util.restart(host.getIp());
+			}
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
@@ -171,10 +226,9 @@ public class App {
     	
     	Logger.debug("Scan...");
 		try {
-	        FastNetworkScanner scanner = new FastNetworkScanner(localSubnetMask, 100, 50);  // Timeout 100ms, 50 Threads
-	        		
-			
-			foundHosts = scanner.scan();
+//			BetterNetworkScanner scanner = new BetterNetworkScanner("255.255.255.0", 100, 50);  // Timeout 100ms, 50 Threads		
+			BetterNetworkScanner scanner = new BetterNetworkScanner();
+			foundHosts = scanner.scan(localIp, this.selectedSubnetMask, 100, 50);
 
 			for (Host host:foundHosts) {
 				savedHosts.put(host.getIp(), host);
@@ -184,18 +238,22 @@ public class App {
 			Json.save(FILENAME, savedHosts);
 
 	        Logger.debug("Fertig.");
-		} catch (InterruptedException e) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
     }
 
 	public Map<String,NetworkInterface> getInterfaces() {
-		// TODO Auto-generated method stub
 		return networkInterfaces;
 	}
 	
-    // Helper method to convert the network prefix length to a subnet mask
+    /**
+     *  Helper method to convert the network prefix length to a subnet mask
+     * @param prefixLength
+     * @return
+     */
     private static String getSubnetMask(short prefixLength) {
         int mask = 0xffffffff << (32 - prefixLength);
         return String.format("%d.%d.%d.%d",
