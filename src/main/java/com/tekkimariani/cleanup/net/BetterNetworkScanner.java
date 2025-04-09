@@ -85,15 +85,34 @@ public class BetterNetworkScanner {
     	return new ArrayList<>();
 
     }
+  
+  
+ /**
+ * Converts an IPv4 address from its string representation to a long.
+ * <p>
+ * This method is useful for converting an IP address into a numeric form 
+ * that can be used for comparison or iteration (e.g., looping through IP ranges).
+ * The IP address must be in the standard dotted-decimal notation, such as "192.168.0.1".
+ * 
+ * @param ip The IPv4 address as a string.
+ * @return A long representing the numerical value of the IP address.
+ * @throws NumberFormatException if the IP string is not properly formatted or contains invalid numbers.
+ */
+private static long ipToLong(String ip) {
+    // Split the IP address into its four octets
+    String[] octets = ip.split("\\.");
     
-    // Helper: Convert IP (String) to long (for iteration)
-    private static long ipToLong(String ip) {
-        String[] octets = ip.split("\\.");
-        return (Long.parseLong(octets[0]) << 24) +
-               (Long.parseLong(octets[1]) << 16) +
-               (Long.parseLong(octets[2]) << 8) +
-               Long.parseLong(octets[3]);
-    }
+    // Parse each octet and shift it into position:
+    // - The first octet is shifted left by 24 bits (most significant)
+    // - The second by 16 bits
+    // - The third by 8 bits
+    // - The fourth remains unchanged (least significant)
+    // This forms a 32-bit integer representing the IP address
+    return (Long.parseLong(octets[0]) << 24) +
+           (Long.parseLong(octets[1]) << 16) +
+           (Long.parseLong(octets[2]) << 8) +
+           Long.parseLong(octets[3]);
+}
 
     // Helper: Convert long back to IP (String)
     private static String longToIp(long ip) {
