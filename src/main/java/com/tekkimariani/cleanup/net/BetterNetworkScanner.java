@@ -114,12 +114,22 @@ private static long ipToLong(String ip) {
            Long.parseLong(octets[3]);
 }
 
-    // Helper: Convert long back to IP (String)
-    private static String longToIp(long ip) {
-        return ((ip >> 24) & 0xFF) + "." +
-               ((ip >> 16) & 0xFF) + "." +
-               ((ip >> 8) & 0xFF) + "." +
-               (ip & 0xFF);
-    }
-
+ /**
+ * Converts a long value back into its corresponding IPv4 address in string format.
+ * <p>
+ * This method reverses the transformation done by {@code ipToLong}, taking a numeric
+ * IP representation and reconstructing its dotted-decimal string format (e.g., "192.168.0.1").
+ *
+ * @param ip The IP address as a long.
+ * @return The IPv4 address as a string in standard dotted-decimal notation.
+ */
+private static String longToIp(long ip) {
+    // Extract each of the four octets by shifting and masking:
+    // - Shift right to bring the desired 8 bits into the least significant position
+    // - Use bitwise AND with 0xFF to isolate the last 8 bits (one octet)
+    // Concatenate the four octets with dots to reconstruct the original IP string
+    return ((ip >> 24) & 0xFF) + "." +
+           ((ip >> 16) & 0xFF) + "." +
+           ((ip >> 8) & 0xFF) + "." +
+           (ip & 0xFF);
 }
