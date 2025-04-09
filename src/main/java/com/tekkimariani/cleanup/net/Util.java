@@ -74,61 +74,107 @@ public class Util {
 //        }
 //    }
     
-    public static void shutdown(String ip) {
-      String username = "Administrator";
-      String password = "Windows11";
+    public static void sendCommand(String ip, String username, String password, String command) {
         try {
+        	// Connect
             JSch jsch = new JSch();
             Session session = jsch.getSession(username, ip, 22);
             session.setPassword(password);
             session.setConfig("StrictHostKeyChecking", "no");
             session.connect();
 
-            // Shutdown-Befehl ausführen
+            // Build
             ChannelExec channel = (ChannelExec) session.openChannel("exec");
             channel.setInputStream(null);
-            channel.setErrStream(System.err);           
-            channel.setCommand("shutdown /s /t 10 /f");
+            
+            // ToDo, bring the output back into the app.
+            channel.setErrStream(System.err);     
+            channel.setOutputStream(System.out); 
+            channel.setCommand(command);
 
+            // Connect and send.
             channel.connect();
-            Thread.sleep(2000); // Warte auf Befehlsausführung
+            Thread.sleep(2000);
+            
+            
             channel.disconnect();
             session.disconnect();
-
-            System.out.println("Shutdown-Befehl gesendet an " + ip);
-
         } catch (Exception e) {
             e.printStackTrace();
-        }
+        }    	
     }
     
-    public static void restart(String ip) {
-        String username = "Administrator";
-        String password = "Windows11";
-          try {
-              JSch jsch = new JSch();
-              Session session = jsch.getSession(username, ip, 22);
-              session.setPassword(password);
-              session.setConfig("StrictHostKeyChecking", "no");
-              session.connect();
-
-              // Shutdown-Befehl ausführen
-              ChannelExec channel = (ChannelExec) session.openChannel("exec");
-              channel.setInputStream(null);
-              channel.setErrStream(System.err);           
-              channel.setCommand("shutdown /r /f /t 0");
-
-              channel.connect();
-              Thread.sleep(2000); // Warte auf Befehlsausführung
-              channel.disconnect();
-              session.disconnect();
-
-              System.out.println("Reboot-Befehl gesendet an " + ip);
-
-          } catch (Exception e) {
-              e.printStackTrace();
-          }
-      }
+//    public static void shutdown(String ip) {
+//      String username = "Administrator";
+//      String password = "Windows11";
+//        try {
+//            JSch jsch = new JSch();
+//            Session session = jsch.getSession(username, ip, 22);
+//            session.setPassword(password);
+//            session.setConfig("StrictHostKeyChecking", "no");
+//            session.connect();
+//
+//            // Shutdown-Befehl ausführen
+//            ChannelExec channel = (ChannelExec) session.openChannel("exec");
+//            channel.setInputStream(null);
+//            channel.setErrStream(System.err);           
+//            channel.setCommand("shutdown /s /t 10 /f");
+//
+//            channel.connect();
+//            Thread.sleep(2000); // Warte auf Befehlsausführung
+//            channel.disconnect();
+//            session.disconnect();
+//
+//            System.out.println("Shutdown-Befehl gesendet an " + ip);
+//
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//    }
+    
+    public static void shutdown(String ip, String username, String password) {
+//        String username = "Administrator";
+//        String password = "Windows11";
+        String command = "shutdown /s /t 10 /f"; // Shutdown after 10 sec forced
+        Util.sendCommand(ip, username, password, command);
+        Logger.info("Shutdown-Befehl gesendet an " + ip);
+    }
+    
+    public static void restart(String ip, String username, String password) {
+//        String username = "Administrator";
+//        String password = "Windows11";
+        String command = "shutdown /r /f /t 0"; // Restart after 0 sec forced
+        Util.sendCommand(ip, username, password, command);
+        Logger.info("Restart-Befehl gesendet an " + ip);
+    }
+    
+//    public static void restart(String ip) {
+//        String username = "Administrator";
+//        String password = "Windows11";
+//          try {
+//              JSch jsch = new JSch();
+//              Session session = jsch.getSession(username, ip, 22);
+//              session.setPassword(password);
+//              session.setConfig("StrictHostKeyChecking", "no");
+//              session.connect();
+//
+//              // Shutdown-Befehl ausführen
+//              ChannelExec channel = (ChannelExec) session.openChannel("exec");
+//              channel.setInputStream(null);
+//              channel.setErrStream(System.err);           
+//              channel.setCommand("shutdown /r /f /t 0");
+//
+//              channel.connect();
+//              Thread.sleep(2000); // Warte auf Befehlsausführung
+//              channel.disconnect();
+//              session.disconnect();
+//
+//              System.out.println("Reboot-Befehl gesendet an " + ip);
+//
+//          } catch (Exception e) {
+//              e.printStackTrace();
+//          }
+//      }
 
 	
     public static void sendWakeOnLan(String macAddress, String broadcastAddress) throws Exception {

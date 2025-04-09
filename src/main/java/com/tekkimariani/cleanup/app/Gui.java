@@ -3,7 +3,12 @@ package com.tekkimariani.cleanup.app;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.NetworkInterface;
@@ -13,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -23,8 +29,7 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
-
-import org.tinylog.Logger;
+import javax.swing.border.EmptyBorder;
 
 import com.tekkimariani.cleanup.net.Host;
 import com.tekkimariani.cleanup.net.Util;
@@ -56,12 +61,16 @@ public class Gui {
 	private JLabel labelLocalBroadcast;
 	
     private JLabel info;
+    
+    private JTextArea infoArea;
 	
 	DefaultListModel<String> listModel;
 	
 	private static App app;
 	
 	private static JList<String> computerList;
+	
+	JLabel statusLabel;
 	
 	private List<String> subnetSelection = List.of("255.255.255.255");
 	JComboBox<String> maskComboBox;
@@ -93,18 +102,28 @@ public class Gui {
 		}
 	}
 	
-	public void setInfoPanel() {
+	public void setInfoPanel(String text) {
+		infoArea.setText(text+"\n");
+	}
 	
+	public void addInfoPanel(String text) {
+		infoArea.setText(infoArea.getText()+text+"\n");
+		
+	}
+	
+	public void clearInfoPanel() {
+		infoArea.setText("");
 	}
 	
     private void createAndShowGUI() {
 
         // Fenster erstellen
-        frame = new JFrame("Netzwerksteuerung");
+        frame = new JFrame("Cerberus - Hack to the Future");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(800, 400);
         frame.setLayout(new BorderLayout());
         frame.getContentPane().setBackground(bgColor);
+        frame.setLocationRelativeTo(null);
 
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
@@ -135,6 +154,10 @@ public class Gui {
     public void showInfo(String infoText) {
         info.setText(infoText);
         this.show(GUI_INFO);
+    }
+    
+    public void setStatus(String status) {
+    	statusLabel.setText(status);
     }
 
 
@@ -201,39 +224,55 @@ public class Gui {
     	
         // Haupt-Panel für den dreigeteilten Bereich (Abstände entfernt)
         JPanel mainPanel = new JPanel(); // 0 Abstand#
-        BoxLayout mainPanelLayout = new BoxLayout(mainPanel, 0);
+        BoxLayout mainPanelLayout = new BoxLayout(mainPanel, BoxLayout.X_AXIS);
         mainPanel.setLayout(mainPanelLayout);
+        
+//        mainPanel.setLayout(new BorderLayout());
+        
         mainPanel.setBackground(bgColor);
         mainPanel.setBorder(BorderFactory.createEmptyBorder()); // Keine Ränder
-
+        mainPanel.setAlignmentY(Component.TOP_ALIGNMENT);
 
         computerList = createStyledList(panelColor, fgColor);
 
         JScrollPane scrollPane = new JScrollPane(computerList);
         styleScrollPane(scrollPane, panelColor);
         // Begrenzung der Breite
-        int fixedWidth = 100; // Hier die gewünschte Breite einstellen
+        int fixedWidth = 200; // Hier die gewünschte Breite einstellen
         scrollPane.setPreferredSize(new Dimension(fixedWidth, Integer.MAX_VALUE));
+        scrollPane.setMinimumSize(new Dimension(fixedWidth, Integer.MAX_VALUE));
+        scrollPane.setMaximumSize(new Dimension(fixedWidth, Integer.MAX_VALUE));
+//        mainPanel.add(scrollPane);
         mainPanel.add(scrollPane);
 
         // *** Mittlerer Bereich: Buttons ***
         JPanel buttonPanel = createButtonPanel(btnColor, fgColor);
         mainPanel.add(buttonPanel);
 
+
         // *** Rechte Seite: Textfeld für Informationen ***
-        JTextArea infoArea = createStyledTextArea(panelColor, fgColor);
+        infoArea = createStyledTextArea(panelColor, fgColor);
         infoArea.setLineWrap(true);      // Aktiviert den Zeilenumbruch
         infoArea.setWrapStyleWord(true); // Bricht den Text nur bei ganzen Wörtern um
-
+        infoArea.setBorder(new EmptyBorder(10, 10, 10, 10));
 
         JScrollPane infoScrollPane = new JScrollPane(infoArea, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        infoScrollPane.setPreferredSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+        infoScrollPane.setMinimumSize(new Dimension(0, Integer.MAX_VALUE));
+        infoScrollPane.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));    
+        
+        
+        
         styleScrollPane(infoScrollPane, panelColor);
+        
+        
+        
         mainPanel.add(infoScrollPane);
-        infoArea.setText("");
+        infoArea.setText("Something");
         panel.add(mainPanel, BorderLayout.CENTER);
 
         // *** Statusleiste unten ***
-        JLabel statusLabel = createStyledLabel("Status: Bereit", fgColor);
+        statusLabel = createStyledLabel("Status: Bereit", fgColor);
         JPanel statusPanel = createStatusPanel(statusColor, statusLabel);
         panel.add(statusPanel, BorderLayout.SOUTH);
 
@@ -303,17 +342,39 @@ public class Gui {
     }
 
     // Methode zum Erstellen eines Button-Panels mit mehreren Buttons
-    private JPanel createButtonPanel(Color btnColor, Color fgColor) {
+    private JPanel createButtonPanel(Color btnColor, Color fgColor) {        
         JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.Y_AXIS)); // Minimaler Abstand
-        buttonPanel.setBackground(new Color(45, 45, 45)); // Hintergrund für Buttonbereich
-        buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Einheitlicher Abstand
 
+        buttonPanel.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridheight = 1;
+        gbc.anchor = GridBagConstraints.WEST; // Linksbündig
+        gbc.insets = new Insets(0, 0, 0, 0); // Kleiner vertikaler Abstand
+        gbc.anchor = GridBagConstraints.NORTHWEST; // Top-left alignment
+        gbc.weighty = 0;
+        gbc.fill = GridBagConstraints.BOTH;  // Stretch horizontally
+
+        
+        buttonPanel.setBackground(new Color(45, 45, 45)); // Hintergrund für Buttonbereich
+//        buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Einheitlicher Abstand
+        buttonPanel.setPreferredSize(new Dimension(200, Integer.MAX_VALUE));
+        buttonPanel.setMinimumSize(new Dimension(200, Integer.MAX_VALUE));
+        buttonPanel.setMaximumSize(new Dimension(200, Integer.MAX_VALUE));
+        buttonPanel.setBorder(BorderFactory.createLineBorder(Color.GREEN)); // Debug border  
+        
         labelLocalIp = createStyledLabel("", Color.WHITE);
         
         labelLocalSubnet = createStyledLabel("", Color.WHITE);
         
+        
+
         maskComboBox = new JComboBox<>(subnetSelection.toArray(new String[0]));
+        
+        maskComboBox.setPreferredSize(new Dimension(200, 30));
+        maskComboBox.setMaximumSize(new Dimension(200, 30)); // Verhindert Wachstum
+        maskComboBox.setMinimumSize(new Dimension(200, 30)); // Verhindert Schrumpfen
         maskComboBox.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -324,29 +385,31 @@ public class Gui {
                 app.setSelectedSubmask(selectedMask);
             }
         });
+        JPanel comboBoxWrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        comboBoxWrapper.setBackground(new Color(45, 45, 45)); // Hintergrund anpassen
+        comboBoxWrapper.add(maskComboBox);
+
+
+
         
         labelLocalBroadcast = createStyledLabel("", Color.WHITE);
         this.setLocal("", "", "");
         
      // TODO: Move the buttons to the selected section
         
-        JButton btn1 = createStyledButton("Scan", btnColor, fgColor);
+        JButton btn1 = createStyledButton(App.ACTION_SCAN, btnColor, fgColor);
         btn1.addActionListener(e -> {
-        	Logger.debug("Scanne das Netzwerk nach Computern.");
         	app.actionScan();
         });
         
-        JButton btn2 = createStyledButton("WOL", btnColor, fgColor);
+        JButton btn2 = createStyledButton(App.ACTION_WAKE, btnColor, fgColor);
         btn2.addActionListener(e -> {
-        	Logger.debug("Send Wake-on-LAN Packet.");
         	app.actionWol();
         });
         
-        JButton btn3 = createStyledButton("Restart", btnColor, fgColor);
+        JButton btn3 = createStyledButton(App.ACTION_RESTART, btnColor, fgColor);
         btn3.addActionListener(e -> {
-        	Logger.debug("restart :o");
         	app.actionRestart();
-        	// TODO: Implement the restart action
         });
         
         JButton btn4 = createStyledButton(App.ACTION_SHUTDOWN, btnColor, fgColor);
@@ -354,19 +417,57 @@ public class Gui {
             app.actionShutdown();
         });
         
-        // TODO: Do a delete button to delete host from the list.
+        JButton btn5 = createStyledButton(App.ACTION_DELETE, btnColor, fgColor);
+        btn5.addActionListener(e -> {
+            app.actionDelete();
+        });
+ 
+//        
+//        JPanel btn1Wrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+//        btn1Wrapper.setBackground(new Color(45, 45, 45)); // Hintergrund anpassen
+//        infoArea.setBorder(new EmptyBorder(10, 10, 10, 10));
+//        btn1Wrapper.add(btn1);
+//        
 
+        gbc.insets = new Insets(2, 10, 2, 10);
+        buttonPanel.add(labelLocalIp, gbc); gbc.gridy++;
+        buttonPanel.add(labelLocalSubnet, gbc); gbc.gridy++;
         
-        buttonPanel.add(labelLocalIp);
-        buttonPanel.add(labelLocalSubnet);
-        buttonPanel.add(maskComboBox);
-        buttonPanel.add(labelLocalBroadcast);
-        buttonPanel.add(btn1);
-        buttonPanel.add(btn2);
-        buttonPanel.add(btn3);
-        buttonPanel.add(btn4);
+        gbc.insets = new Insets(2, 2, 2, 2);
+        buttonPanel.add(maskComboBox, gbc); gbc.gridy++;
+//        buttonPanel.add(comboBoxWrapper); gbc.gridy++;
         
+        gbc.insets = new Insets(2, 10, 2, 10);
+        buttonPanel.add(labelLocalBroadcast, gbc); gbc.gridy++;
+        
+        
+
+        gbc.insets = new Insets(2, 10, 2, 10);
+//        buttonPanel.add(btn1, gbc); gbc.gridy++;
+        buttonPanel.add(btn1, gbc); gbc.gridy++;
+
+        buttonPanel.add(btn2, gbc); gbc.gridy++;
+        buttonPanel.add(btn3, gbc); gbc.gridy++;
+        buttonPanel.add(btn4, gbc); gbc.gridy++;
+        buttonPanel.add(btn5, gbc); gbc.gridy++;
+        
+   
+        
+        
+        // Row 2: Empty space filler (pushes content up)
+        gbc.gridy++;
+        gbc.gridx = 0;
+        gbc.gridwidth = 3; // Span all columns
+        gbc.weighty = 1.0; // Takes all vertical space
+        buttonPanel.add(Box.createGlue(), gbc);        
         return buttonPanel;
+    }
+    
+    private JPanel wrap(Component c) {
+        JPanel wrap = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        wrap.setBackground(new Color(45, 45, 45)); // Hintergrund anpassen
+        wrap.add(c);
+        return wrap;
     }
 
     // Methode zum Erstellen eines einheitlichen Buttons
@@ -414,6 +515,7 @@ public class Gui {
     private JPanel createStatusPanel(Color bgColor, JLabel statusLabel) {
         JPanel statusPanel = new JPanel(new BorderLayout());
         statusPanel.setBackground(bgColor);
+        statusPanel.setPreferredSize(new Dimension(Integer.MAX_VALUE, 30));
         statusPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(70, 70, 70))); // Dezente Linie oben
         statusPanel.add(statusLabel, BorderLayout.CENTER);
         return statusPanel;
